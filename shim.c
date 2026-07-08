@@ -1,4 +1,4 @@
-nclude <stddef.h>
+#include <stddef.h>
  
 void *memcpy(void *dst, const void *src, size_t n) {
     unsigned char *d = (unsigned char *)dst;
