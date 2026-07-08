@@ -16,7 +16,7 @@ WASM3_OBJS = $(WASM3_SRCS:.c=.o)
 #   d_m3CodePageAlignSize    chunk size for compiled "code pages";
 WASM3_DEFS = -Dd_m3FixedHeap=12288 \
              -Dd_m3MaxFunctionStackHeight=64 \
-             -Dd_m3CodePageAlignSize=1024 \ 
+             -Dd_m3CodePageAlignSize=1024 \
              -Dd_m3VerboseErrorMessages=0 # need snprintf for this
  
 CFLAGS    = -march=rv32imac -mabi=ilp32 -ffreestanding -nostdlib -O1 -Wall -I$(WASM3_DIR) $(WASM3_DEFS)
