@@ -15,6 +15,9 @@
  * sense of the bitstream -- that's a later step.
  */
 
+#include <stdint.h>
+#include "wasm3.h"
+
 #define UART0_BASE   0x10013000UL
 #define UART_TXDATA  (*(volatile unsigned int *)(UART0_BASE + 0x00))
 #define UART_TXCTRL  (*(volatile unsigned int *)(UART0_BASE + 0x08))
@@ -33,6 +36,7 @@ static void uart_putc(char c) {
     UART_TXDATA = (unsigned char)c;
 }
 
+// not static!! abort() (see shim.c) needs to write to UART
 void uart_puts(const char *s) {
     while (*s) {
         if (*s == '\n') {
@@ -49,13 +53,20 @@ static void uart_put_hex32(unsigned int v) {
     }
 }
 
-void report_trap(unsigned int mcause, unsigned int mepc, unsigned int mtval) {
+void report_trap(unsigned int mcause, unsigned int mepc, unsigned int mtval,
+                  unsigned int orig_a0, unsigned int orig_a1, unsigned int orig_a2) {
     uart_puts("\n*** TRAP *** mcause=0x");
     uart_put_hex32(mcause);
     uart_puts(" mepc=0x");
     uart_put_hex32(mepc);
     uart_puts(" mtval=0x");
     uart_put_hex32(mtval);
+    uart_puts("\n    a0=0x");
+    uart_put_hex32(orig_a0);
+    uart_puts(" a1=0x");
+    uart_put_hex32(orig_a1);
+    uart_puts(" a2=0x");
+    uart_put_hex32(orig_a2);
     uart_puts("\n");
 }
 
@@ -71,6 +82,80 @@ void report_trap(unsigned int mcause, unsigned int mepc, unsigned int mtval) {
 static int data_test = 42;
 static int bss_test;
 
+/*
+ * Hand-encoded minimal wasm module: exports a function "add" of type
+ * (i32, i32) -> i32, body is local.get 0; local.get 1; i32.add; end.
+ * No imports, no memory -- deliberately nothing here that needs a
+ * host function, so this only exercises wasm3's core parse/compile/
+ * execute pipeline, not the WASI shim.
+ */
+static const uint8_t add_wasm[] = {
+    0x00, 0x61, 0x73, 0x6D, 0x01, 0x00, 0x00, 0x00, /* \0asm, version 1 */
+    0x01, 0x07, 0x01, 0x60, 0x02, 0x7F, 0x7F, 0x01, 0x7F, /* type: (i32,i32)->i32 */
+    0x03, 0x02, 0x01, 0x00,                               /* func 0 uses type 0 */
+    0x07, 0x07, 0x01, 0x03, 0x61, 0x64, 0x64, 0x00, 0x00, /* export "add" -> func 0 */
+    0x0A, 0x09, 0x01, 0x07, 0x00,                         /* code section, 1 func, body size 7, 0 locals */
+    0x20, 0x00,                                           /* local.get 0 */
+    0x20, 0x01,                                           /* local.get 1 */
+    0x6A,                                                  /* i32.add */
+    0x0B                                                   /* end */
+};
+
+
+/* No printf -- minimal decimal printer for values we get back from wasm. */
+static void uart_put_uint(unsigned int v) {
+    char buf[11]; /* max "4294967295" + NUL */
+    int i = 10;
+    buf[10] = '\0';
+    if (v == 0) {
+        uart_puts("0");
+        return;
+    }
+    while (v > 0 && i > 0) {
+        buf[--i] = '0' + (char)(v % 10);
+        v /= 10;
+    }
+    uart_puts(&buf[i]);
+}
+
+static void run_add_test(void) {
+    uart_puts("wasm3 env: ");
+    IM3Environment env = m3_NewEnvironment();
+    uart_puts(env != NULL ? "OK\n" : "FAIL\n");
+
+    uart_puts("wasm3 runtime: ");
+    IM3Runtime runtime = m3_NewRuntime(env, 2048, NULL);
+    uart_puts(runtime != NULL ? "OK\n" : "FAIL\n");
+
+    uart_puts("parse module: ");
+    IM3Module module;
+    M3Result result = m3_ParseModule(env, &module, add_wasm, sizeof(add_wasm));
+    uart_puts(result == NULL ? "OK\n" : "FAIL\n");
+    if (result) { uart_puts(result); uart_puts("\n"); return; }
+
+    uart_puts("load module: ");
+    result = m3_LoadModule(runtime, module);
+    uart_puts(result == NULL ? "OK\n" : "FAIL\n");
+    if (result) { uart_puts(result); uart_puts("\n"); return; }
+
+    uart_puts("find function: ");
+    IM3Function function;
+    result = m3_FindFunction(&function, runtime, "add");
+    uart_puts(result == NULL ? "OK\n" : "FAIL\n");
+    if (result) { uart_puts(result); uart_puts("\n"); return; }
+
+    uart_puts("call add(5, 3): ");
+    result = m3_CallV(function, 5, 3);
+    uart_puts(result == NULL ? "OK\n" : "FAIL\n");
+    if (result) { uart_puts(result); uart_puts("\n"); return; }
+
+    uint32_t sum = 0;
+    result = m3_GetResultsV(function, &sum);
+    uart_puts("result: ");
+    uart_put_uint(sum);
+    uart_puts("\n");
+}
+
 void main(void) {
     uart_init();
     uart_puts("Hello, world!\n");
@@ -80,6 +165,8 @@ void main(void) {
 
     uart_puts("bss test: ");
     uart_puts(bss_test == 0 ? "OK\n" : "FAIL\n");
+
+    run_add_test();
 
     while (1) {
         /* nothing left to do */

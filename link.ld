@@ -25,46 +25,49 @@
  * be stored anywhere); start.S just zeroes its VMA range directly.
  * QEMU's -kernel loader would happily preload RAM directly and mask
  * the need for any of this, but real hardware won't.
+ *
+ * .sdata/.sbss (RISC-V's gp-relative "small data" sections) are
+ * folded into .data/.bss below rather than given their own output
+ * sections. We disabled their generation at compile time too
+ * (-msmall-data-limit=0), but catching them here defensively means
+ * nothing silently lands in untracked, never-copied/zeroed memory
+ * again if that ever lapses.
  */
-
 OUTPUT_ARCH("riscv")
 ENTRY(_start)
-
 MEMORY
 {
   FLASH (rx)  : ORIGIN = 0x20400000, LENGTH = 1M
   RAM   (rwx) : ORIGIN = 0x80000000, LENGTH = 16K
 }
-
 SECTIONS
 {
   .text : {
     *(.text.start)
     *(.text*)
   } > FLASH
-
   .rodata : {
     *(.rodata*)
+    *(.srodata*)
   } > FLASH
-
   .data : {
     . = ALIGN(4);
     _data_start = .;
     *(.data*)
+    *(.sdata*)
     . = ALIGN(4);
     _data_end = .;
   } > RAM AT> FLASH
   _data_lma = LOADADDR(.data);
-
   .bss : {
     . = ALIGN(4);
     _bss_start = .;
     *(.bss*)
+    *(.sbss*)
     *(COMMON)
     . = ALIGN(4);
     _bss_end = .;
   } > RAM
-
   . = ALIGN(16);
   _stack_top = ORIGIN(RAM) + LENGTH(RAM);
 }

@@ -25,7 +25,7 @@ WASM3_DEFS = -Dd_m3FixedHeap=12288 \
              -Dd_m3HasFloat=0 \
              -Dd_m3NoFloatDynamic=0
 
-BASEFLAGS = -march=rv32imac_zicsr_zifencei -mabi=ilp32 -ffreestanding -nostdlib -O1 -Wall
+BASEFLAGS = -march=rv32imac_zicsr_zifencei -mabi=ilp32 -ffreestanding -nostdlib -O1 -Wall -msmall-data-limit=0
 
 ASFLAGS  = $(BASEFLAGS)
 
