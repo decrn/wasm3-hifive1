@@ -2,9 +2,10 @@ CC        = riscv64-elf-gcc
 
 WASM3_DIR = wasm3/source
 
-# exclude m3_api_*.c (this is WASI, libc emu, tracing, ...)
-WASM3_SRCS = $(filter-out %/m3_api_wasi.c %/m3_api_libc.c %/m3_api_tracer.c %/m3_api_meta.c %/m3_api_uvwasi.c, \
-                $(wildcard $(WASM3_DIR)/*.c))
+WASM3_ALL = $(wildcard $(WASM3_DIR)/*.c)
+WASM3_API = $(wildcard $(WASM3_DIR)/m3_api_*.c)
+WASM3_SRCS = $(filter-out $(WASM3_API),$(WASM3_ALL))
+
 WASM3_OBJS = $(WASM3_SRCS:.c=.o)
 
 # wasm3 typically requires at least 64kB RAM, we have 16kB so we have to mess with some numbers...
@@ -17,9 +18,12 @@ WASM3_OBJS = $(WASM3_SRCS:.c=.o)
 WASM3_DEFS = -Dd_m3FixedHeap=12288 \
              -Dd_m3MaxFunctionStackHeight=64 \
              -Dd_m3CodePageAlignSize=1024 \
-             -Dd_m3VerboseErrorMessages=0 # need snprintf for this
+             -Dd_m3VerboseErrorMessages=0 \
+	     -Dd_m3HasFloat=0 \
+	     -Dd_m3NoFloatDynamic=0
+
  
-CFLAGS    = -march=rv32imac -mabi=ilp32 -ffreestanding -nostdlib -O1 -Wall -I$(WASM3_DIR) $(WASM3_DEFS)
+CFLAGS    = -march=rv32imac -mabi=ilp32 -ffreestanding -nostdlib -O1 -Wall -Iinclude -I$(WASM3_DIR) $(WASM3_DEFS)
 LDFLAGS   = -T link.ld
 
 all: hello.elf
