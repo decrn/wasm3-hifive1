@@ -42,6 +42,21 @@ void uart_puts(const char *s) {
     }
 }
 
+static void uart_put_hex32(unsigned int v) {
+    static const char hex[] = "0123456789abcdef";
+    for (int i = 28; i >= 0; i -= 4) {
+        uart_putc(hex[(v >> i) & 0xF]);
+    }
+}
+
+void report_trap(unsigned int mcause, unsigned int mepc) {
+    uart_puts("\n*** TRAP *** mcause=0x");
+    uart_put_hex32(mcause);
+    uart_puts(" mepc=0x");
+    uart_put_hex32(mepc);
+    uart_puts("\n");
+}
+
 /*
  * Deliberate .data/.bss test: data_test has a non-zero initializer,
  * so its correct value can only come from the flash->RAM copy-down
