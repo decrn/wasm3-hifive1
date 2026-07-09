@@ -39,7 +39,7 @@ hang:
 .align 4 /* no vectoring? */
 .global trap_handler
 trap_handler:
-mv   t3, a0
+    mv   t3, a0
     mv   t4, a1
     mv   t5, a2
     csrr a0, mcause
