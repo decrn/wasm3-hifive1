@@ -24,18 +24,24 @@ WASM3_DEFS = -Dd_m3FixedHeap=12288 \
              -Dd_m3VerboseErrorMessages=0 \
              -Dd_m3HasFloat=0 \
              -Dd_m3NoFloatDynamic=0
- 
-CFLAGS    = -march=rv32imac -mabi=ilp32 -ffreestanding -nostdlib -O1 -Wall
-CFLAGS   += -Iinclude
+
+BASEFLAGS = -march=rv32imac -mabi=ilp32 -ffreestanding -nostdlib -O1 -Wall
+
+ASFLAGS  = $(BASEFLAGS)
+
+CFLAGS   = $(BASEFLAGS)
+CFLAGS   += -ffunction-sections -fdata-sections
+CFLAGS   += -Iinclude -include string.h
 CFLAGS   += -I$(WASM3_DIR)
 CFLAGS   += $(WASM3_DEFS)
 
 LDFLAGS   = -T link.ld
+LDFLAGS += -Wl,--gc-sections
 
 all: hello.elf
 
 start.o: start.S
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(ASFLAGS) -c $< -o $@
 
 hello.o: hello.c
 	$(CC) $(CFLAGS) -c $< -o $@
