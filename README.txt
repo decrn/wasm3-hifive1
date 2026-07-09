@@ -71,7 +71,11 @@ Read this to save yourself time
     with -msmall-data-limit=0 plus explicit *(.sdata*)/*(.sbss*)
     rules in link.ld. Caused a real memset(NULL, ...) crash that took
     a while to trace back to this.
-  - No trap handler installed (mtvec left unset)
   - QEMU's sifive_e machine has a hardcoded mask-ROM reset vector
     that jumps to a fixed flash address regardless of the ELF entry
     point -- setting the ELF entry point alone is not sufficient.
+    See: https://github.com/qemu/qemu/blob/master/hw/riscv/sifive_e.c#L15
+  - A trap handler is registered (mtvec -> trap_handler in start.S):
+    on any trap it saves a0-a2, reads mcause/mepc/mtval, and calls
+    report_trap() in hello.c to print all of it over UART instead of
+    silently hanging.
