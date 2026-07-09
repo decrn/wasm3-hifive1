@@ -4,6 +4,9 @@
  
 _start:
     la   sp, _stack_top
+
+    la   t0, trap_handler
+    csrw mtvec, t0
  
     /* copy .data: flash (_data_lma) -> RAM (_data_start.._data_end) */
     la   t0, _data_lma
@@ -33,3 +36,11 @@ zero_bss_done:
 hang:
     j hang
  
+.align 4 /* no vectoring? */
+.global trap_handler
+trap_handler:
+    csrr a0, mcause
+    csrr a1, mepc
+    call report_trap
+trap_hang:
+    j trap_hang
