@@ -33,7 +33,7 @@ static void uart_putc(char c) {
     UART_TXDATA = (unsigned char)c;
 }
 
-static void uart_puts(const char *s) {
+void uart_puts(const char *s) {
     while (*s) {
         if (*s == '\n') {
             uart_putc('\r');

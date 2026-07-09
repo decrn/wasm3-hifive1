@@ -33,3 +33,13 @@ int strcmp(const char *a, const char *b) {
     }
     return (int)(unsigned char)*a - (int)(unsigned char)*b;
 }
+
+// see hello.c
+void uart_puts(const char *s);
+
+void abort(void) {
+    uart_puts("\n*** ABORT: wasm3 called abort() ***\n");
+    while (1) {
+        /* halt */
+    }
+}
