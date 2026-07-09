@@ -49,11 +49,13 @@ static void uart_put_hex32(unsigned int v) {
     }
 }
 
-void report_trap(unsigned int mcause, unsigned int mepc) {
+void report_trap(unsigned int mcause, unsigned int mepc, unsigned int mtval) {
     uart_puts("\n*** TRAP *** mcause=0x");
     uart_put_hex32(mcause);
     uart_puts(" mepc=0x");
     uart_put_hex32(mepc);
+    uart_puts(" mtval=0x");
+    uart_put_hex32(mtval);
     uart_puts("\n");
 }
 

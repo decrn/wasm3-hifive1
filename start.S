@@ -41,6 +41,7 @@ hang:
 trap_handler:
     csrr a0, mcause
     csrr a1, mepc
+    csrr a2, mtval
     call report_trap
 trap_hang:
     j trap_hang
