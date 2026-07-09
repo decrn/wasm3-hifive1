@@ -15,13 +15,15 @@ WASM3_OBJS = $(WASM3_SRCS:.c=.o)
 #   d_m3MaxFunctionStackHeight  compile-time per-function operand-stack
 #                               sanity bound (slots, 4 bytes each) total 256 bytes per fn call
 #   d_m3CodePageAlignSize    chunk size for compiled "code pages";
+#   d_m3HasFloat             toggles the floating point part of the wasm instruction set 
+#   d_m3NoFloatDynamic       see above
+
 WASM3_DEFS = -Dd_m3FixedHeap=12288 \
              -Dd_m3MaxFunctionStackHeight=64 \
              -Dd_m3CodePageAlignSize=1024 \
              -Dd_m3VerboseErrorMessages=0 \
              -Dd_m3HasFloat=0 \
              -Dd_m3NoFloatDynamic=0
-
  
 CFLAGS    = -march=rv32imac -mabi=ilp32 -ffreestanding -nostdlib -O1 -Wall
 CFLAGS   += -Iinclude
