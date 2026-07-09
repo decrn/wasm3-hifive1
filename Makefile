@@ -19,11 +19,15 @@ WASM3_DEFS = -Dd_m3FixedHeap=12288 \
              -Dd_m3MaxFunctionStackHeight=64 \
              -Dd_m3CodePageAlignSize=1024 \
              -Dd_m3VerboseErrorMessages=0 \
-	     -Dd_m3HasFloat=0 \
-	     -Dd_m3NoFloatDynamic=0
+             -Dd_m3HasFloat=0 \
+             -Dd_m3NoFloatDynamic=0
 
  
-CFLAGS    = -march=rv32imac -mabi=ilp32 -ffreestanding -nostdlib -O1 -Wall -Iinclude -I$(WASM3_DIR) $(WASM3_DEFS)
+CFLAGS    = -march=rv32imac -mabi=ilp32 -ffreestanding -nostdlib -O1 -Wall
+CFLAGS   += -Iinclude
+CFLAGS   += -I$(WASM3_DIR)
+CFLAGS   += $(WASM3_DEFS)
+
 LDFLAGS   = -T link.ld
 
 all: hello.elf
