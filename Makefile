@@ -25,7 +25,7 @@ WASM3_DEFS = -Dd_m3FixedHeap=12288 \
              -Dd_m3HasFloat=0 \
              -Dd_m3NoFloatDynamic=0
 
-BASEFLAGS = -march=rv32imac -mabi=ilp32 -ffreestanding -nostdlib -O1 -Wall
+BASEFLAGS = -march=rv32imac_zicsr_zifencei -mabi=ilp32 -ffreestanding -nostdlib -O1 -Wall
 
 ASFLAGS  = $(BASEFLAGS)
 
@@ -47,7 +47,7 @@ hello.o: hello.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 hello.elf: start.o hello.o shim.o $(WASM3_OBJS) link.ld
-	$(CC) $(CFLAGS) $(LDFLAGS) start.o hello.o shim.o $(WASM3_OBJS) -o hello.elf
+	$(CC) $(CFLAGS) $(LDFLAGS) start.o hello.o shim.o $(WASM3_OBJS) -o hello.elf -lgcc
 
 run: hello.elf
 	qemu-system-riscv32 -M sifive_e -nographic -kernel hello.elf
